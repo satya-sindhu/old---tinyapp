@@ -2,22 +2,27 @@
   "name": "tinyapp",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "express_server.js",
   "scripts": {
+    "start": "./node_modules/.bin/nodemon -L express_server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/satya-sindhu/tinyapp.git"
   },
-  "keywords": [],
-  "author": "",
+  "author": "Satya Sindhu Movva and movva001@gmail.com",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/satya-sindhu/tinyapp/issues"
   },
   "homepage": "https://github.com/satya-sindhu/tinyapp#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "body-parser": "^1.18.3",
+    "ejs": "^2.6.1",
+    "express": "^4.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.5"
   }
 }
