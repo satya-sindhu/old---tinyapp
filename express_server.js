@@ -135,12 +135,16 @@ app.post("/login", (req, res) => {
   if (user === null) {
     res.status(403);
   } else {
-     const {id} = authenticateUserInfo(email,users);
-     //set cookie
-     res.cookie('user_id', id);
-     console.log("id" , id);
+    //  const {id,password} = authenticateUserInfo(email,users);
+     if (password === user.password) {
+      //set cookie
+          res.cookie('user_id', user.id);
+          console.log("id" , user.id);
+          res.redirect("/urls");
+     } else {
+      res.status(403);
+     }
      
-    res.redirect("/urls");
   }
 });
 
