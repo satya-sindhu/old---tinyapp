@@ -33,7 +33,7 @@ const users = {
     password: "dishwasher-funk"
   }
 }
-const authenticateUserInfo = (email,password,users) => {
+const authenticateUserInfo = (email,users) => {
   for (const user_id in users){
    console.log(user_id); 
    const user= users[user_id]
@@ -73,7 +73,7 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const user = users[req.cookies["user_id"]];
   const templateVars = { urls: urlDatabase, user: user,users: users };
-  
+  console.log(user);
   res.render("urls_index", templateVars);
 });       
 
@@ -129,12 +129,15 @@ app.get("/u/:shortURL", (req, res) => {
  
 app.post("/login", (req, res) => {
   const {email,password} = req.body;
-  const { error } = authenticateLoginUser(email,password,users);
-  console.log("login failed", error);
-  if (error) {
+  console.log("users",users);
+  const user = authenticateUserInfo(email,users);
+  // console.log("login failed", error);
+  if (user === null) {
     res.status(403);
   } else {
-     const {id} = getUseIdBasedOnEmail(email,users);
+     const {id} = authenticateUserInfo(email,users);
+     //set cookie
+     res.cookie('user_id', id);
      console.log("id" , id);
      
     res.redirect("/urls");
@@ -147,7 +150,7 @@ app.post("/register", (req,res) => {
   if( email==='' || password ==='') {
     return res.status(400).send('email or password should not be empty : <a href="/register">Register</a>'); 
   }
-  const user = authenticateUserInfo(email,password,users);
+  const user = authenticateUserInfo(email,users);
   if (user) {
     const error = "user already registered";
     return res.status(400).send(`${error}. Please try again : <a href="/register">Register</a>`);
