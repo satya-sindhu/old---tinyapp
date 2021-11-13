@@ -18,8 +18,14 @@ app.use(cookieSession({
 }))
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
 const users = { 
   "userRandomID": {
@@ -71,9 +77,13 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const templateVars = { urls: urlDatabase, user: user,users: users };
-  console.log(user);
+  
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[req.session["user_id"]],
+  };
+
+  console.log(templateVars);
   res.render("urls_index", templateVars);
 });       
 
@@ -106,8 +116,12 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+ const userid = req.session.user_id;
+ const user = users[userid]
+ if (!user) {
+   res.redirect('/login');
 
-  const user = users[req.cookies["user_id"]];
+ }
   const templateVars = { user: user };
   res.render("urls_new",templateVars);
 });
@@ -121,10 +135,10 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const templateVars = { "user":user};
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL,templateVars);
+  
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  console.log(longURL,"HI",req.params.shortURL);
+   res.redirect(longURL);
 });
  
 app.post("/login", (req, res) => {
@@ -133,15 +147,19 @@ app.post("/login", (req, res) => {
   const user = authenticateUserInfo(email,users);
   // console.log("login failed", error);
   if (user === null) {
-    res.status(403);
-  } else {
+    console.log("1")
+    res.status(403).send("invalid password");
+      } else {
+    console.log("2")
     //  const {id,password} = authenticateUserInfo(email,users);
      if (password === user.password) {
+      console.log("3")
       //set cookie
           res.cookie('user_id', user.id);
           console.log("id" , user.id);
           res.redirect("/urls");
      } else {
+      console.log("4")
       res.status(403);
      }
      
