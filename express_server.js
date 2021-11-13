@@ -143,7 +143,10 @@ app.post("/login", (req, res) => {
 
 app.post("/register", (req,res) => {
   const {email,password} = req.body;
-  console.log("users");
+  console.log(users);
+  if( email==='' || password ==='') {
+    return res.status(400).send('email or password should not be empty : <a href="/register">Register</a>'); 
+  }
   const user = authenticateUserInfo(email,password,users);
   if (user) {
     const error = "user already registered";
@@ -152,7 +155,7 @@ app.post("/register", (req,res) => {
     const id = generateRandomString();
     const hashedPassword = bcrypt.hashSync(password, 10);
     users[id] = {"id":id,"email":email,"password":hashedPassword};
-    console.log("users");
+    console.log(users);
     res.cookie('user_id', id);
     req.session.user_id =  id; //install cookie-session 
     res.redirect("/urls");
