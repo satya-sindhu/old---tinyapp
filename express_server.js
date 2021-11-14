@@ -1,22 +1,27 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
+// const cookieParser = require('cookie-parser')
+let cookieSession = require('cookie-session');
 const PORT = 8080; // default port 8080
 const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const bcrypt = require("bcryptjs") 
-const cookieSession = require('cookie-session')
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
 app.use(cookieSession({
-  name: 'session',
+ name: 'session',
   keys: ['lknt42fnoh90hn2hf90w8fhofnwe0'],
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
 app.use(bodyParser.urlencoded({
   extended: true
+}));
+app.use(cookieSession({
+  name: 'tinyapp',
+  keys: ["user_id"],
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000
 }));
 
 const urlDatabase = {
@@ -98,7 +103,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  console.log(req.session["user_id"]);
+  console.log(req.session.user_id);
   const templateVars = {
     urls: urlDatabase,
     user: users[req.session["user_id"]],
@@ -147,7 +152,7 @@ app.post("/urls/:id", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
  const userid = req.session.user_id;
- const user= users[req.session["user_id"]]
+ const user= users[req.session.user_id]
  if (!user) {
    res.redirect('/login');
 
@@ -235,13 +240,13 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const user = users[req.cookies["user_id"]];
+  const user = users[req.session.user_id];
   const templateVars = {user};
   res.render("login",templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const user = users[req.cookies["user_id"]];
+  const user = users[req.session.user_id];
   const templateVars = {user};
   res.render("register_user",templateVars);
 });
