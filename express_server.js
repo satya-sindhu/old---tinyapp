@@ -189,11 +189,11 @@ app.post("/login", (req, res) => {
   // console.log("login failed", error);
   if (user === null) {
     console.log("1")
-    res.status(403).send("invalid password");
+    res.status(403).send("user not found");
       } else {
     console.log("2")
     //  const {id,password} = authenticateUserInfo(email,users);
-     if (password === user.password) {
+     if (bcrypt.compareSync(password,user.password)) {
       console.log("3")
       //set cookie
           req.session.user_id =user.id;
@@ -235,7 +235,9 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  res.render("login");
+  const user = users[req.cookies["user_id"]];
+  const templateVars = {user};
+  res.render("login",templateVars);
 });
 
 app.get("/register", (req, res) => {
