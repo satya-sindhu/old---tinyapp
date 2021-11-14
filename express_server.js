@@ -11,15 +11,23 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
-  keys: ["key"],
-
+  keys: ['lknt42fnoh90hn2hf90w8fhofnwe0'],
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
 const users = { 
   "userRandomID": {
@@ -33,6 +41,25 @@ const users = {
     password: "dishwasher-funk"
   }
 }
+const urlsForUser = function(userId , urlsDB) {
+  const userURLs = {};
+
+  for (let shorturl in urlsDB) {
+    const {longURL , userID} = urlsDB[shorturl];
+    if (userId === userID)
+      userURLs[shorturl] = urlsDB[shorturl];
+  }
+  return userURLs;
+};
+
+const validateShortURLForUser = function(userId, shortUrl,urlsDB) {
+  const userURLs = urlsForUser(userId,urlsDB);
+  for (let key of Object.keys(userURLs)) {
+    if (shortUrl === key)
+      return {data : key};
+  }
+  return {data: null};
+};
 const authenticateUserInfo = (email,users) => {
   for (const user_id in users){
    console.log(user_id); 
@@ -71,9 +98,13 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const templateVars = { urls: urlDatabase, user: user,users: users };
-  console.log(user);
+  console.log(req.session["user_id"]);
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[req.session["user_id"]],
+  };
+
+  console.log(templateVars);
   res.render("urls_index", templateVars);
 });       
 
@@ -83,13 +114,22 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   //console.log(shortURL);
   urlDatabase[shortURL] = longURL;
-  res.redirect(`/urls/${shortURL}`);         // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls`);         // Respond with 'Ok' (we will replace this)
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const user = users[req.session.user_id];
+  if (user) {
   const {shortURL} = req.params;
+  const {data} = validateShortURLForUser(user["id"],shortURL, urlDatabase);
+    if (shortURL === data) {
   delete urlDatabase[shortURL];
   res.redirect('/urls');
+} else {
+  res.status(400).send(`You are not Authorized to delete. <a href="/urls">URLs</a>`);
+}
+}
+
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
@@ -106,25 +146,40 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+ const userid = req.session.user_id;
+ const user= users[req.session["user_id"]]
+ if (!user) {
+   res.redirect('/login');
 
-  const user = users[req.cookies["user_id"]];
+ }
   const templateVars = { user: user };
   res.render("urls_new",templateVars);
 });
 
-app.get("/urls/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+app.get("/urls/:shortURL/edit", (req, res) => {
+  const user = users[req.session.user_id];
+  if (user) {
+  const shortURL = req.params.shortURL;
+  const {data} = validateShortURLForUser(user["id"], shortURL,urlDatabase);
+    if (shortURL === data) {
+    const {longURL,userID} = urlDatabase[shortURL];
   //console.log(req.params.shortURL, urlDatabase, longURL);
-  const templateVars = { shortURL: req.params.shortURL, longURL: longURL , username: req.cookies["username"]};
+  const templateVars = { shortURL: req.params.shortURL, longURL: longURL ,"user":user};
   //console.log(templateVars);
   res.render("urls_show", templateVars);
+} else {
+  res.status(400).send(`You are not Authorized to edit. <a href="/urls">URLs</a>`);
+    }
+  }
+  
 });
 
+
 app.get("/u/:shortURL", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const templateVars = { "user":user};
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL,templateVars);
+  
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  console.log(longURL,"HI",req.params.shortURL);
+   res.redirect(longURL);
 });
  
 app.post("/login", (req, res) => {
@@ -133,15 +188,19 @@ app.post("/login", (req, res) => {
   const user = authenticateUserInfo(email,users);
   // console.log("login failed", error);
   if (user === null) {
-    res.status(403);
-  } else {
+    console.log("1")
+    res.status(403).send("invalid password");
+      } else {
+    console.log("2")
     //  const {id,password} = authenticateUserInfo(email,users);
      if (password === user.password) {
+      console.log("3")
       //set cookie
-          res.cookie('user_id', user.id);
+          req.session.user_id =user.id;
           console.log("id" , user.id);
           res.redirect("/urls");
      } else {
+      console.log("4")
       res.status(403);
      }
      
