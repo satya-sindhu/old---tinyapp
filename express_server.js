@@ -4,8 +4,6 @@ const bodyParser = require("body-parser");
 // const cookieParser = require('cookie-parser')
 let cookieSession = require('cookie-session');
 const PORT = 8080; // default port 8080
-const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-const bcrypt = require("bcryptjs") 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
@@ -45,43 +43,6 @@ const users = {
     email: "user2@example.com", 
     password: "dishwasher-funk"
   }
-}
-const urlsForUser = function(userId , urlsDB) {
-  const userURLs = {};
-
-  for (let shorturl in urlsDB) {
-    const {longURL , userID} = urlsDB[shorturl];
-    if (userId === userID)
-      userURLs[shorturl] = urlsDB[shorturl];
-  }
-  return userURLs;
-};
-
-const validateShortURLForUser = function(userId, shortUrl,urlsDB) {
-  const userURLs = urlsForUser(userId,urlsDB);
-  for (let key of Object.keys(userURLs)) {
-    if (shortUrl === key)
-      return {data : key};
-  }
-  return {data: null};
-};
-const authenticateUserInfo = (email,users) => {
-  for (const user_id in users){
-   console.log(user_id); 
-   const user= users[user_id]
-   if (user.email === email){
-     return user;
-   }
-  }
-  return null;
-}
-function generateRandomString() {
-  let result = ' ';
-  const charactersLength = characters.length;
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
 }
 
 // app.get("/", (req, res) => {
@@ -155,8 +116,7 @@ app.get("/urls/new", (req, res) => {
  const user= users[req.session.user_id]
  if (!user) {
    res.redirect('/login');
-
- }
+}
   const templateVars = { user: user };
   res.render("urls_new",templateVars);
 });
@@ -190,6 +150,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/login", (req, res) => {
   const {email,password} = req.body;
   console.log("users",users);
+
   const user = authenticateUserInfo(email,users);
   // console.log("login failed", error);
   if (user === null) {
@@ -218,6 +179,7 @@ app.post("/register", (req,res) => {
   if( email==='' || password ==='') {
     return res.status(400).send('email or password should not be empty : <a href="/register">Register</a>'); 
   }
+  
   const user = authenticateUserInfo(email,users);
   if (user) {
     const error = "user already registered";
@@ -233,6 +195,7 @@ app.post("/register", (req,res) => {
   }
 
   });
+
 app.post("/logout", (req, res) => { 
   res.clearCookie("user");
   res.clearCookie("user_id");
@@ -261,6 +224,7 @@ app.post("/logout", (req, res) => {
   res.clearCookie('username');
    res.redirect("/urls");
 });
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
