@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const bcrypt = require('bcryptjs');
-const {authenticateUserInfo,generateRandomString } =require("./helpers/helpers.js");
+const {generateRandomString,authenticateUserInfo,getUserByEmail,urlsForUser,validateShortURLForUser} =require("./helpers/helpers.js");
 // const cookieParser = require('cookie-parser')
 let cookieSession = require('cookie-session');
 const PORT = 8080; // default port 8080
@@ -47,9 +47,9 @@ const users = {
   }
 }
 
-// app.get("/", (req, res) => {
-//   res.render("login");
-// });
+app.get("/", (req, res) => {
+  res.render("login");
+});
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -74,14 +74,18 @@ app.get("/urls", (req, res) => {
 
   console.log(templateVars);
   res.render("urls_index", templateVars);
-});       
+});      
+
+
+   
 
 app.post("/urls", (req, res) => {
   //console.log(req.body);  // Log the POST request body to the console
+  const userID = users[req.session.user_id];
   const {longURL} = req.body;
   const shortURL = generateRandomString();
   //console.log(shortURL);
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = {"longURL" : longURL, "userID": userID["id"] };
   res.redirect(`/urls`);         // Respond with 'Ok' (we will replace this)
 });
 
@@ -102,7 +106,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.post("/urls/:shortURL/edit", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
-  const templateVars = { shortURL: req.params.shortURL, longURL: longURL , username: req.cookies["username"] };
+  const user= users[req.session.user_id]
+  const templateVars = { shortURL: req.params.shortURL, longURL: longURL,user};
   res.render("urls_show", templateVars);
 });
 
@@ -112,7 +117,6 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[id] = longURL;
   res.redirect('/urls');
 });
-
 app.get("/urls/new", (req, res) => {
  const userid = req.session.user_id;
  const user= users[req.session.user_id]
@@ -199,10 +203,10 @@ app.post("/register", (req,res) => {
   });
 
 app.post("/logout", (req, res) => { 
-  res.clearCookie("user");
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
+  
 
 app.get("/login", (req, res) => {
   const user = users[req.session.user_id];
@@ -230,4 +234,3 @@ app.post("/logout", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
