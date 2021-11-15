@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
+const bcrypt = require('bcryptjs');
+const {authenticateUserInfo,generateRandomString } =require("./helpers/helpers.js");
 // const cookieParser = require('cookie-parser')
 let cookieSession = require('cookie-session');
 const PORT = 8080; // default port 8080
@@ -179,7 +181,7 @@ app.post("/register", (req,res) => {
   if( email==='' || password ==='') {
     return res.status(400).send('email or password should not be empty : <a href="/register">Register</a>'); 
   }
-  
+
   const user = authenticateUserInfo(email,users);
   if (user) {
     const error = "user already registered";
